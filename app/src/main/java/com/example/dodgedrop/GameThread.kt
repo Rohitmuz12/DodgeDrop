@@ -32,7 +32,7 @@ class GameThread(
                 canvas = surfaceHolder.lockCanvas()
                 synchronized(surfaceHolder) {
                     gameView.update(deltaTime.coerceAtMost(0.05f)) // clamp to avoid huge jumps after a stall
-                    gameView.draw(canvas)
+                    gameView.render(canvas)
                 }
             } catch (e: Exception) {
                 // Surface may not be ready yet; ignore and continue loop

@@ -214,7 +214,7 @@ class GameView(context: Context) : SurfaceView(context), SurfaceHolder.Callback 
         flashAlpha = 0.6f
     }
 
-    fun draw(canvas: Canvas) {
+    fun render(canvas: Canvas) {
         canvas.save()
 
         // Apply screen shake offset

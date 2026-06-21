@@ -1,15 +1,19 @@
-# Dodge Drop
+# Dodge Drop — Space Edition
 
-A one-tap arcade game for Android: tap to jump over incoming spikes. Endless runner,
-gets faster the longer you survive, saves your high score locally.
+A one-tap arcade game for Android: tap to launch your energy orb over drifting
+asteroids. Endless runner with a full space theme — parallax starfield, glowing
+player, particle effects, a combo multiplier, and a shield power-up.
 
 ## What's in this project
 
 - **Kotlin**, no external game engine — built on `SurfaceView` + a dedicated render
   thread (`GameThread`) for smooth 60fps gameplay.
 - **No internet/ads/IAP** — fully offline, nothing to configure.
-- **Minimal dependencies** — just AndroidX core + AppCompat, so the first Gradle
-  sync will be fast.
+- **Visual theme**: dark nebula gradient backdrop, multi-layer parallax stars, a
+  drifting ringed planet, glowing pulsing player orb, rotating jagged asteroids,
+  and a full particle system (thruster trail, clear bursts, death explosion).
+- **Gameplay extras**: combo multiplier for consecutive clears, a collectible
+  shield power-up that grants one free hit, screen shake + flash on death.
 
 ## How to build & run
 
@@ -35,10 +39,13 @@ directly (you'll need to allow "install from unknown sources").
 | File | Purpose |
 |---|---|
 | `MainActivity.kt` | Hosts the game fullscreen, keeps screen awake |
-| `GameView.kt` | Core game loop: states (ready/playing/game over), spawning, scoring, difficulty curve, drawing |
-| `GameThread.kt` | Runs update+draw at a steady ~60fps on a background thread |
-| `Player.kt` | The jumping ball — gravity, jump physics, squash/stretch |
-| `Obstacle.kt` | The spikes the player must clear |
+| `GameView.kt` | Core game loop: states, spawning, scoring, combo system, difficulty curve, rendering |
+| `GameThread.kt` | Runs update+render at a steady ~60fps on a background thread |
+| `Player.kt` | The glowing player orb — gravity, jump physics, squash/stretch, shield rendering |
+| `Obstacle.kt` | Rotating jagged asteroid obstacles |
+| `PowerUp.kt` | Collectible shield orb that floats and bobs |
+| `StarField.kt` | Parallax background: stars, nebula glow, drifting planet |
+| `ParticleSystem.kt` | Thruster trail, clear bursts, death explosion particles |
 | `ScoreManager.kt` | Saves high score to `SharedPreferences` (persists between launches) |
 
 ### Easy tweaks
@@ -46,10 +53,12 @@ directly (you'll need to allow "install from unknown sources").
 - **Jump height / gravity feel** → `Player.kt`, change `gravity` and `jumpVelocity`
 - **Starting difficulty / ramp speed** → `GameView.kt`, look for `baseSpeed`,
   `maxSpeed`, and the `speed = ...` / `spawnInterval = ...` lines in `update()`
-- **Colors** → each class has its own `Paint` definitions using hex colors, easy
-  to find and swap
-- **Obstacle shape** → currently a triangle spike in `Obstacle.draw()`, swap for
-  any `Canvas` drawing call (rect, circle, custom `Path`)
+- **Power-up frequency** → `GameView.kt`, `powerUpInterval`
+- **Colors / theme** → each class has its own `Paint` definitions using hex colors
+- **Asteroid shape** → `Obstacle.kt`, `init` block generates the jagged silhouette;
+  tweak `sides` or the radius randomization range
+- **Starfield density** → `StarField.kt`, the `repeat(35)` / `repeat(22)` counts for
+  far/near stars
 
 ## Building the APK from your phone (no computer needed)
 

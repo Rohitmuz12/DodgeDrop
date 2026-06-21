@@ -3,41 +3,57 @@ package com.example.dodgedrop
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RadialGradient
+import android.graphics.Shader
 
 /**
- * The player is a simple ball with gravity + jump impulse physics.
- * Simple, predictable physics is key for a "one more try" game —
- * the player needs to feel like death was THEIR mistake, not the game's.
+ * The player: a glowing energy orb. Gravity/jump physics are unchanged from the
+ * original design (predictable physics matters more for "fair" deaths than visuals
+ * do), but rendering is now a layered glow + pulsing core instead of a flat circle.
  */
 class Player(private val groundY: Float, private val screenWidth: Int) {
 
     var x: Float = screenWidth * 0.28f
     val radius: Float = screenWidth * 0.045f
 
-    // y is the CENTER of the ball. When grounded, the ball's bottom edge sits on groundY.
     private val restingY: Float = groundY - radius
     var y: Float = restingY
     var velocityY: Float = 0f
 
-    private val gravity = 2600f          // px/s^2
-    private val jumpVelocity = -1250f    // px/s (negative = upward)
+    private val gravity = 2600f
+    private val jumpVelocity = -1250f
 
     var isOnGround = true
         private set
 
-    // Squash/stretch for a bit of visual juice — cheap to add, makes movement feel alive
     private var squash = 1f
+    private var pulseTime = 0f
 
-    private val paint = Paint().apply {
-        color = Color.parseColor("#FFD23F")
+    var hasShield = false
+    private var shieldPulse = 0f
+
+    private val coreColor = Color.parseColor("#7FE7FF")
+    private val glowColorOuter = Color.parseColor("#406CE7FF") // semi-transparent cyan
+    private val shieldColor = Color.parseColor("#FFD23F")
+
+    private val glowPaint = Paint().apply { isAntiAlias = true }
+    private val corePaint = Paint().apply { isAntiAlias = true; color = coreColor }
+    private val shieldPaint = Paint().apply {
         isAntiAlias = true
+        style = Paint.Style.STROKE
+        color = shieldColor
+    }
+    private val highlightPaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.WHITE
+        alpha = 160
     }
 
     fun jump() {
         if (isOnGround) {
             velocityY = jumpVelocity
             isOnGround = false
-            squash = 1.3f // stretch on takeoff
+            squash = 1.3f
         }
     }
 
@@ -48,12 +64,13 @@ class Player(private val groundY: Float, private val screenWidth: Int) {
         if (y >= restingY) {
             y = restingY
             velocityY = 0f
-            if (!isOnGround) squash = 0.7f // squash on landing
+            if (!isOnGround) squash = 0.7f
             isOnGround = true
         }
 
-        // Ease squash back to normal — quick spring-like recovery
         squash += (1f - squash) * 0.25f
+        pulseTime += dt * 4f
+        shieldPulse += dt * 6f
     }
 
     fun getBounds(): RectFBounds {
@@ -63,12 +80,29 @@ class Player(private val groundY: Float, private val screenWidth: Int) {
     }
 
     fun draw(canvas: Canvas) {
-        val b = getBounds()
-        canvas.drawOval(b.left, b.top, b.right, b.bottom, paint)
+        val pulse = 1f + 0.08f * kotlin.math.sin(pulseTime)
+        val glowRadius = radius * 2.2f * pulse
 
-        // Simple eye for character/personality — cheap charm
-        val eyePaint = Paint().apply { color = Color.BLACK; isAntiAlias = true }
-        canvas.drawCircle(x + radius * 0.35f, y - radius * 0.5f, radius * 0.12f, eyePaint)
+        glowPaint.shader = RadialGradient(
+            x, y, glowRadius,
+            glowColorOuter, Color.TRANSPARENT,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawCircle(x, y, glowRadius, glowPaint)
+
+        // Core (squash/stretch applied)
+        val b = getBounds()
+        canvas.drawOval(b.left, b.top, b.right, b.bottom, corePaint)
+
+        // Bright inner highlight for a glassy look
+        canvas.drawCircle(x - radius * 0.25f, y - radius * 0.3f, radius * 0.3f, highlightPaint)
+
+        if (hasShield) {
+            val shieldRadius = radius * 1.7f + kotlin.math.sin(shieldPulse) * 4f
+            shieldPaint.strokeWidth = radius * 0.18f
+            shieldPaint.alpha = 200
+            canvas.drawCircle(x, y, shieldRadius, shieldPaint)
+        }
     }
 
     fun reset() {
@@ -76,6 +110,7 @@ class Player(private val groundY: Float, private val screenWidth: Int) {
         velocityY = 0f
         isOnGround = true
         squash = 1f
+        hasShield = false
     }
 }
 
